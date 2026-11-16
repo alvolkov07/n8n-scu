@@ -1,0 +1,841 @@
+{
+  "name": "AI & Tech News Digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "22f8e51f-c7ef-4ae3-a7df-9c019cc71ad1",
+      "name": "Every 24 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        96,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "feeds",
+              "name": "feeds",
+              "type": "array",
+              "value": "={{ [\n  { source: 'Google DeepMind', kind: 'research', url: 'https://deepmind.google/blog/rss.xml' },\n  { source: 'Google Research', kind: 'research', url: 'https://research.google/blog/rss/' },\n  { source: 'OpenAI', kind: 'research', url: 'https://openai.com/news/rss.xml' },\n  { source: 'Anthropic News', kind: 'frontier-lab', url: 'https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_news.xml' },\n  { source: 'Anthropic Research', kind: 'research', url: 'https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_research.xml' },\n  { source: 'Anthropic Engineering', kind: 'hands-on', url: 'https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_anthropic_engineering.xml' },\n  { source: 'xAI', kind: 'frontier-lab', url: 'https://news.google.com/rss/search?q=site:x.ai&hl=en-US&gl=US&ceid=US:en' },\n  { source: 'Mistral AI', kind: 'frontier-lab', url: 'https://mistral.ai/rss.xml' },\n  { source: 'Meta AI', kind: 'frontier-lab', url: 'https://raw.githubusercontent.com/Olshansk/rss-feeds/main/feeds/feed_meta_ai.xml' },\n  { source: 'NVIDIA Blog', kind: 'industry', url: 'https://blogs.nvidia.com/feed/' },\n  { source: 'NVIDIA Developer', kind: 'hands-on', url: 'https://developer.nvidia.com/blog/feed' },\n  { source: 'Berkeley AI Research (BAIR)', kind: 'research', url: 'https://bair.berkeley.edu/blog/feed.xml' },\n  { source: 'Microsoft Research', kind: 'research', url: 'https://www.microsoft.com/en-us/research/feed/' },\n  { source: 'Hugging Face', kind: 'hands-on', url: 'https://huggingface.co/blog/feed.xml' },\n  { source: 'Simon Willison', kind: 'hands-on', url: 'https://simonwillison.net/atom/everything/' },\n  { source: 'Latent Space', kind: 'hands-on', url: 'https://www.latent.space/feed' },\n  { source: 'GitHub Blog (AI & ML)', kind: 'hands-on', url: 'https://github.blog/ai-and-ml/feed/' },\n  { source: 'Import AI', kind: 'analysis', url: 'https://importai.substack.com/feed' },\n  { source: 'MIT Technology Review (AI)', kind: 'analysis', url: 'https://www.technologyreview.com/topic/artificial-intelligence/feed' },\n  { source: 'New York Times (AI)', kind: 'analysis', url: 'https://www.nytimes.com/svc/collections/v1/publish/https://www.nytimes.com/spotlight/artificial-intelligence/rss.xml' },\n  { source: 'a16z', kind: 'analysis', url: 'https://www.a16z.news/feed' },\n  { source: 'n8n Blog', kind: 'hands-on', url: 'https://blog.n8n.io/rss/' }\n] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "60c8d6a7-29a8-4aed-a8ca-253c8f1d824d",
+      "name": "Curated Sources",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        272,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "feeds",
+        "options": {}
+      },
+      "id": "aff3f288-9981-4d09-87e1-e19a43df2057",
+      "name": "Multiple Items Per Source",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "id": "930bbea2-8cec-4f1c-9377-ba8df28c9e09",
+      "name": "Read Source Feed",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        128
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "title",
+              "name": "title",
+              "type": "string",
+              "value": "={{ $json.title || \"\" }}"
+            },
+            {
+              "id": "link",
+              "name": "link",
+              "type": "string",
+              "value": "={{ $json.link || \"\" }}"
+            },
+            {
+              "id": "source",
+              "name": "source",
+              "type": "string",
+              "value": "={{ ($json.link || \"\").split(\"/\")[2] ? ($json.link || \"\").split(\"/\")[2].replace(\"www.\", \"\") : \"\" }}"
+            },
+            {
+              "id": "published",
+              "name": "published",
+              "type": "string",
+              "value": "={{ $json.isoDate || \"\" }}"
+            },
+            {
+              "id": "snippet",
+              "name": "snippet",
+              "type": "string",
+              "value": "={{ String($json.contentSnippet || $json.content || \"\").slice(0, 600) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "656d182b-fd39-4224-b571-0ff11de26b13",
+      "name": "Normalize Article",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        944,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ !!$json.published && !!$json.link && DateTime.fromISO($json.published) >= $now.minus({ hours: 168}) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              },
+              "id": "43ecf114-c8ac-47fa-b184-dca262f12ca4"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "ab74d600-3124-40bc-8934-86c1d0833594",
+      "name": "Published Last Week",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        1168,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "link",
+        "options": {}
+      },
+      "id": "815727d4-f036-46f0-adbc-6d0cdba3a14e",
+      "name": "Remove Duplicate Links",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 2,
+      "position": [
+        1392,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "articles",
+        "options": {}
+      },
+      "id": "de8fc7ba-669d-4248-ab53-b7fab97cf7b2",
+      "name": "Collect Candidates",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1744,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Articles from the last 24 hours (JSON):\n{{ JSON.stringify($json.articles) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a strict editor for a senior AI/tech audience. Score each article from 1 to 10.\nHigh scores (8-10): original research (papers, benchmarks, new methods, model releases with technical detail), and hands-on engineering (working code, reproducible experiments, practical tooling, deep technical write-ups).\nOfficial announcements from frontier AI labs (OpenAI, Anthropic, Google DeepMind, xAI, Meta AI, Mistral, NVIDIA) about new models, major model updates or research results score at least 7.\nMedium (5-7): solid analysis or announcements with real substance but little technical depth.\nLow (1-4): marketing, funding/hiring news, listicles, opinion without evidence, rehashed news, event promos, podcasts without notes.\nCategory must be one of: Research, Hands-on, Industry, Analysis.\nReturn every article you were given, with title, link and source copied exactly."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "997a0cae-ee20-41aa-a7f9-63f1dd169a46",
+      "name": "Score Article Quality",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1968,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5.4-mini",
+          "cachedResultName": "gpt-5.4-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "427561db-0c39-4d27-9850-196283e310a1",
+      "name": "Quality Judge Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1968,
+        352
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"scored\": [\n    { \"title\": \"Article title\", \"link\": \"https://example.org/post\", \"source\": \"deepmind.google\", \"category\": \"Research\", \"score\": 8, \"why\": \"One sentence on why it is (or is not) top-notch\" }\n  ]\n}"
+      },
+      "id": "1b897bba-58ee-467f-b12c-2ee4f15a9056",
+      "name": "Scores Format",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2112,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.scored",
+        "options": {}
+      },
+      "id": "4aa1e7ee-de0b-4272-a0dd-ff1a67e46899",
+      "name": "One Item Per Scored Article",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1.1,
+      "position": [
+        2320,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Number($json.score) }}",
+              "rightValue": 7,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "246e887f-4756-40cd-a357-b3236ecec0c5",
+      "name": "Keep Score 7+",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        2544,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "sortFieldsUi": {
+          "sortField": [
+            {
+              "fieldName": "score",
+              "order": "descending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "04603f4d-a376-4c2b-90fc-58ccfcdae950",
+      "name": "Best First",
+      "type": "n8n-nodes-base.sort",
+      "typeVersion": 1,
+      "position": [
+        2768,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 12
+      },
+      "id": "4971d67e-6573-4324-b34e-e0d62b43b1e3",
+      "name": "Top 12",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        2992,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "top",
+        "options": {}
+      },
+      "id": "955e606e-cc0b-49d7-946a-76924dbe394e",
+      "name": "Bundle Top Articles",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3216,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Selected articles (JSON, each with its index):\n{{ JSON.stringify(($json.top || []).map((a, i) => ({ index: i, title: a.title, link: a.link, source: a.source, category: a.category, why: a.why }))) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You design small inline visual diagrams for an HTML email briefing about AI and tech news.\nDecide for each article whether it describes a clear technical advance that a diagram can explain: new model performance, research methods, software or systems improvements, AI engineering, or step-by-step guides. Skip business, funding, IPO, personnel, policy and pure marketing news. Make a diagram for at most 6 articles.\nFor each chosen article return its index and diagramHtml: a self-contained HTML snippet that shows the innovation visually, for example a before/after comparison, a 3-4 step pipeline with arrows, or simple bar-style metric comparison.\nStrict email rules (Gmail strips anything else): use only <table>, <tr>, <td>, <div>, <span>, <b>, <br> with inline style attributes. No <style>, <script>, <svg>, <img>, classes, external fonts or CSS variables. Use Arial/Helvetica, a clean white or very light background, soft accent colors, rounded boxes, and &rarr; arrows. Max width 560px. Keep text short and readable by a non-expert.\nBase every diagram only on the title, source and notes given. Never invent numbers or facts that are not in the input; use qualitative labels instead.\nIf no article qualifies, return an empty visuals array."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "24fb2ff7-a937-4f3d-b136-269e6c1fe27d",
+      "name": "Design Article Visuals",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        3616,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "claude-opus-5-5",
+          "mode": "list",
+          "cachedResultName": "Claude Opus 5.5"
+        },
+        "options": {
+          "maxTokensToSample": 16000
+        }
+      },
+      "id": "87837c3e-9239-40cf-a033-fbb3a9957cde",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.6,
+      "position": [
+        3616,
+        320
+      ],
+      "credentials": {
+        "anthropicApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"visuals\": [\n    { \"index\": 0, \"diagramHtml\": \"<table role='presentation' width='100%' style='border-collapse:collapse;font-family:Arial,sans-serif'><tr><td style='background:#eef4ff;padding:12px;border-radius:8px'>Before</td><td style='padding:0 8px'>&rarr;</td><td style='background:#e8f8ee;padding:12px;border-radius:8px'>After</td></tr></table>\" }\n  ]\n}"
+      },
+      "id": "2c531026-2ee2-4c84-a5a1-d4956cc68581",
+      "name": "Visuals Format",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        3760,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Date: {{ $now.toFormat(\"MMMM d, yyyy\") }}\nSelected articles (JSON, each with its index):\n{{ JSON.stringify(($('Bundle Top Articles').item.json.top || []).map((a, i) => ({ index: i, ...a }))) }}\nArticle indexes that have a diagram: {{ JSON.stringify((($json.output || {}).visuals || []).map(v => v.index)) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You write a concise daily AI & tech briefing for practitioners, including integrated visual diagrams for specific articles.\nGroup items by category (Research, Hands-on, Industry, Analysis). For each section where there is no article, please still keep the section in and empty. For each item give the linked title, source, and a summary of the article's contents and its significance. Start with a 2-3 sentence \"Top takeaways\" section.\nUse only the articles provided. Never invent links or facts. Prioritize the links based on relevance.\nEvery article title must be a clickable link: <a href=\"LINK\">Title</a>, using the exact link from the input.\nFor every article whose index is in the list of indexes that have a diagram, put the marker [[VISUAL:index]] on its own line directly after that article's summary in emailHtml (for example [[VISUAL:3]]). Do not write the diagram yourself; the marker is replaced with the diagram later. Do not add markers for other articles.\nProduce emailHtml (clean HTML with inline styles only, no <html>/<body>/<style> tags), slackText, and docText (plain text for a document, with links written out in full, no markers)."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "636aec37-f62e-42ef-b29d-e2820aee0761",
+      "name": "Write Daily Report",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        5168,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.6-sol",
+          "mode": "list",
+          "cachedResultName": "gpt-5.6-sol"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "84cda553-8dde-4b0e-9a24-2675deddce16",
+      "name": "Report Writer Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        5168,
+        272
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"subject\": \"AI & Tech Brief - Nov 15: headline of the day\",\n  \"emailHtml\": \"<h2>Research</h2><ul><li><a href='https://...'>Title</a> - summary</li></ul>\",\n  \"slackText\": \"*AI & Tech Brief*\\n*Research*\\n- <https://...|Title> - summary\",\n  \"docText\": \"AI & Tech Brief\\n\\nResearch\\n- Title (https://...) - summary\"\n}"
+      },
+      "id": "8b1a23c7-9423-43c6-a2a1-a2efaab5d850",
+      "name": "Report Format",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        5312,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "subject",
+              "name": "subject",
+              "type": "string",
+              "value": "={{ $json.output.subject }}"
+            },
+            {
+              "id": "emailHtml",
+              "name": "emailHtml",
+              "type": "string",
+              "value": "={{ ((($('Design Article Visuals').item.json.output || {}).visuals || []).reduce((html, v) => html.split('[[VISUAL:' + v.index + ']]').join('<div style=\"margin:8px 0 20px 0;max-width:560px\">' + v.diagramHtml + '</div>'), $json.output.emailHtml || '')).replace(/[[VISUAL:d+]]/g, '') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a64ab482-15ed-4c42-b40e-364fce9dc82d",
+      "name": "Insert Visuals",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        4320,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "emma.doeffinger@gmail.com\navolkov2@scu.edu",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.emailHtml }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "3fb69535-13c4-4f11-a0e6-c15290201fe5",
+      "name": "Email Report",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        5456,
+        96
+      ],
+      "webhookId": "68ef95c5-9d7f-4005-aacf-70e93dff4e13",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "cwH65OdxOGSADy8d",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Every 24 Hours": {
+      "main": [
+        [
+          {
+            "node": "Curated Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Curated Sources": {
+      "main": [
+        [
+          {
+            "node": "Multiple Items Per Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Multiple Items Per Source": {
+      "main": [
+        [
+          {
+            "node": "Read Source Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Source Feed": {
+      "main": [
+        [
+          {
+            "node": "Normalize Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Article": {
+      "main": [
+        [
+          {
+            "node": "Published Last Week",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Published Last Week": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicate Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remove Duplicate Links": {
+      "main": [
+        [
+          {
+            "node": "Collect Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Candidates": {
+      "main": [
+        [
+          {
+            "node": "Score Article Quality",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Score Article Quality": {
+      "main": [
+        [
+          {
+            "node": "One Item Per Scored Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Judge Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Score Article Quality",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scores Format": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Score Article Quality",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "One Item Per Scored Article": {
+      "main": [
+        [
+          {
+            "node": "Keep Score 7+",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Keep Score 7+": {
+      "main": [
+        [
+          {
+            "node": "Best First",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Best First": {
+      "main": [
+        [
+          {
+            "node": "Top 12",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Top 12": {
+      "main": [
+        [
+          {
+            "node": "Bundle Top Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bundle Top Articles": {
+      "main": [
+        [
+          {
+            "node": "Design Article Visuals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Design Article Visuals": {
+      "main": [
+        [
+          {
+            "node": "Write Daily Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Design Article Visuals",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Visuals Format": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Design Article Visuals",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Daily Report": {
+      "main": [
+        [
+          {
+            "node": "Insert Visuals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Writer Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Daily Report",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Report Format": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Write Daily Report",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Visuals": {
+      "main": [
+        [
+          {
+            "node": "Email Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1966d35a-6cb7-44cf-9950-0794e07d99d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4ef993d76374166e9805def495e5bf93b87c87f54e5fb114688eb4ca02f9d5da"
+  },
+  "nodeGroups": [
+    {
+      "id": "463119e0-5cd7-4042-9623-59751e603f3f",
+      "name": "Gather fresh articles",
+      "nodeIds": [
+        "60c8d6a7-29a8-4aed-a8ca-253c8f1d824d",
+        "aff3f288-9981-4d09-87e1-e19a43df2057",
+        "930bbea2-8cec-4f1c-9377-ba8df28c9e09",
+        "656d182b-fd39-4224-b571-0ff11de26b13",
+        "ab74d600-3124-40bc-8934-86c1d0833594",
+        "815727d4-f036-46f0-adbc-6d0cdba3a14e"
+      ],
+      "description": "Reads curated research labs and hands-on engineering blogs, keeping only new, unique posts from the past day"
+    },
+    {
+      "id": "b7406d4e-7b08-419f-980f-053bb1af97b7",
+      "name": "Screen for quality",
+      "nodeIds": [
+        "de8fc7ba-669d-4248-ab53-b7fab97cf7b2",
+        "997a0cae-ee20-41aa-a7f9-63f1dd169a46",
+        "427561db-0c39-4d27-9850-196283e310a1",
+        "1b897bba-58ee-467f-b12c-2ee4f15a9056",
+        "4aa1e7ee-de0b-4272-a0dd-ff1a67e46899",
+        "246e887f-4756-40cd-a357-b3236ecec0c5",
+        "04603f4d-a376-4c2b-90fc-58ccfcdae950",
+        "4971d67e-6573-4324-b34e-e0d62b43b1e3",
+        "955e606e-cc0b-49d7-946a-76924dbe394e"
+      ],
+      "description": "AI editor scores every post 1-10 for research depth and practical value; only the best 12 scoring 7+ move on"
+    },
+    {
+      "id": "bc266a10-2ef6-47a4-b0fa-699e3382d63a",
+      "name": "Publish visual briefing",
+      "nodeIds": [
+        "24fb2ff7-a937-4f3d-b136-269e6c1fe27d",
+        "87837c3e-9239-40cf-a033-fbb3a9957cde",
+        "2c531026-2ee2-4c84-a5a1-d4956cc68581",
+        "636aec37-f62e-42ef-b29d-e2820aee0761",
+        "84cda553-8dde-4b0e-9a24-2675deddce16",
+        "8b1a23c7-9423-43c6-a2a1-a2efaab5d850",
+        "a64ab482-15ed-4c42-b40e-364fce9dc82d",
+        "3fb69535-13c4-4f11-a0e6-c15290201fe5"
+      ],
+      "description": "Draws simple diagrams for technical stories, writes the linked briefing, and emails it with the visuals inline"
+    }
+  ],
+  "id": "r5BnNRq4t7rwrQOc",
+  "tags": []
+}
